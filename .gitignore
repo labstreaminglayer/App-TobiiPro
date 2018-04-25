@@ -1,0 +1,6 @@
+ui_*.h
+/build*/
+# TobiiSDK with license restrictions
+/tobii/
+/CMakeLists.txt.user
+/CMakeLists.json
