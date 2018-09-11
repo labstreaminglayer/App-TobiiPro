@@ -19,7 +19,7 @@ if(NOT TARGET LSL::lsl)
 endif()
 
 # create an imported target we later add the required information to
-add_library(tobii SHARED IMPORTED)
+add_library(tobii UNKNOWN IMPORTED)
 
 # find the tobii_research.h header in the subfolder tobii/include
 find_path(TOBII_SDK_INCLUDE_PATH
