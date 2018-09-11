@@ -1,7 +1,7 @@
 # TobiiPro Connector
 
 This app connects to a Tobii Pro device to the LabRecorder.
-It requires you to get the [TobiiPro C SDK](http://developer.tobiipro.com) and
+It requires you to get the [TobiiPro C SDK](https://www.tobiipro.com/product-listing/tobii-pro-sdk/#Download) and
 make sure your use case is covered by the end user agreement.
 
 ## Building
