@@ -3,23 +3,21 @@
 #include <tobii_research.h>
 #include <tobii_research_eyetracker.h>
 
-int main(int argc, char** argv) {
-	TobiiResearchEyeTrackers* eyetrackers = nullptr;
-	TobiiResearchStatus result;
-	size_t i = 0;
-	result = tobii_research_find_all_eyetrackers(&eyetrackers);
+int main(int argc, char **argv) {
+	TobiiResearchEyeTrackers *eyetrackers = nullptr;
+
+	auto result = tobii_research_find_all_eyetrackers(&eyetrackers);
 	if (result != TOBII_RESEARCH_STATUS_OK) {
 		std::cout << "Finding trackers failed. Error: " << result << std::endl;
 		return result;
 	}
-	for (i = 0; i < eyetrackers->count; i++) {
-		TobiiResearchEyeTracker* eyetracker = eyetrackers->eyetrackers[i];
+	for (auto i = 0; i < eyetrackers->count; i++) {
+		TobiiResearchEyeTracker *eyetracker = eyetrackers->eyetrackers[i];
 		std::cout << tobii_str_wrap(&tobii_research_get_address, eyetracker) << '\t'
-		          << tobii_str_wrap(&tobii_research_get_serial_number, eyetracker) << '\t'
-		          << tobii_str_wrap(&tobii_research_get_device_name, eyetracker) << '\n';
-
+				  << tobii_str_wrap(&tobii_research_get_serial_number, eyetracker) << '\t'
+				  << tobii_str_wrap(&tobii_research_get_device_name, eyetracker) << '\n';
 	}
-	std::cout << "Found " <<  (int)eyetrackers->count << " Eye Trackers \n\n" << std::endl;
+	std::cout << "Found " << (int)eyetrackers->count << " Eye Trackers \n\n" << std::endl;
 	tobii_research_free_eyetrackers(eyetrackers);
 	return result;
 }

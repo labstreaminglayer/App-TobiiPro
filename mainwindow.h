@@ -16,20 +16,21 @@ struct TobiiResearchEyeTracker;
 class MainWindow : public QMainWindow {
 	Q_OBJECT
 public:
-	explicit MainWindow(QWidget* parent, const char* config_file);
+	explicit MainWindow(QWidget *parent, const char *config_file);
 	~MainWindow() noexcept override;
 
 	std::unique_ptr<lsl::stream_outlet> gaze_stream;
 
 private slots:
-	void closeEvent(QCloseEvent* ev) override;
+	void closeEvent(QCloseEvent *ev) override;
 	void toggleRecording();
 	void refresh_eyetrackers();
 
 private:
-	void load_config(const QString& filename);
-	void save_config(const QString& filename);
+	// function for loading / saving the config file
+	void load_config(const QString &filename);
+	void save_config(const QString &filename);
 	std::unique_ptr<Ui::MainWindow> ui; // window pointer
-	TobiiResearchEyeTracker* current_tracker;
+	TobiiResearchEyeTracker *current_tracker;
 	QTimer statusTimer;
 };

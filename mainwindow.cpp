@@ -14,7 +14,7 @@
 #include <tobii_research_streams.h>
 
 static const char tobiisdklicense[] =
-    "1) You may not copy (except for backup purposes), modify, adapt, decompile, reverse \
+	"1) You may not copy (except for backup purposes), modify, adapt, decompile, reverse \
 engineer, disassemble, or create derivative works of the Software Components or any part thereof.\n\
 2) You may not redistribute or combine/bundle any part of the Software Components \
 with other software, or distribute any software or device incorporating part of the Software \
@@ -29,8 +29,8 @@ notices (including copyright and trademark notices) that may be affixed to or co
 the Software Components";
 
 template <typename Args>
-QString tobii_str_wrap_QString(TobiiResearchStatus (*funcptr)(Args, char**), Args args) {
-	char* tmp;
+QString tobii_str_wrap_QString(TobiiResearchStatus (*funcptr)(Args, char **), Args args) {
+	char *tmp;
 	if (auto res = funcptr(args, &tmp) != TOBII_RESEARCH_STATUS_OK)
 		throw std::runtime_error("Error in Tobii Call: " + std::to_string(res));
 	QString res(tmp);
@@ -40,8 +40,8 @@ QString tobii_str_wrap_QString(TobiiResearchStatus (*funcptr)(Args, char**), Arg
 
 static uint32_t samples_written = 0;
 
-void push_tobii_gaze(TobiiResearchGazeData* g, void* gaze_stream) {
-	auto gs = reinterpret_cast<lsl::stream_outlet*>(gaze_stream);
+void push_tobii_gaze(TobiiResearchGazeData *g, void *gaze_stream) {
+	auto gs = reinterpret_cast<lsl::stream_outlet *>(gaze_stream);
 	if (!g->left_eye.gaze_point.validity) {
 		g->left_eye.gaze_point.position_on_display_area.x = NAN;
 		g->left_eye.gaze_point.position_on_display_area.y = NAN;
@@ -51,30 +51,29 @@ void push_tobii_gaze(TobiiResearchGazeData* g, void* gaze_stream) {
 		g->right_eye.gaze_point.position_on_display_area.y = NAN;
 	}
 	const float sample[] = {g->left_eye.gaze_point.position_on_display_area.x,
-	                        g->left_eye.gaze_point.position_on_display_area.y,
-	                        g->left_eye.pupil_data.validity ? g->left_eye.pupil_data.diameter : NAN,
-	                        g->right_eye.gaze_point.position_on_display_area.x,
-	                        g->right_eye.gaze_point.position_on_display_area.y,
-	                        g->right_eye.pupil_data.validity ? g->right_eye.pupil_data.diameter
-	                                                         : NAN};
+		g->left_eye.gaze_point.position_on_display_area.y,
+		g->left_eye.pupil_data.validity ? g->left_eye.pupil_data.diameter : NAN,
+		g->right_eye.gaze_point.position_on_display_area.x,
+		g->right_eye.gaze_point.position_on_display_area.y,
+		g->right_eye.pupil_data.validity ? g->right_eye.pupil_data.diameter : NAN};
 	gs->push_sample(sample, g->system_time_stamp / 1000000.);
 	samples_written++;
 };
 
-MainWindow::MainWindow(QWidget* parent, const char* config_file)
-    : QMainWindow(parent), ui(new Ui::MainWindow) {
+MainWindow::MainWindow(QWidget *parent, const char *config_file)
+	: QMainWindow(parent), ui(new Ui::MainWindow) {
 	ui->setupUi(this);
 	connect(ui->actionLoad_Configuration, &QAction::triggered, [this]() {
-		load_config(QFileDialog::getOpenFileName(this, "Load Configuration File", "",
-		                                         "Configuration Files (*.cfg)"));
+		load_config(QFileDialog::getOpenFileName(
+			this, "Load Configuration File", "", "Configuration Files (*.cfg)"));
 	});
 	connect(ui->actionSave_Configuration, &QAction::triggered, [this]() {
-		save_config(QFileDialog::getSaveFileName(this, "Save Configuration File", "",
-		                                         "Configuration Files (*.cfg)"));
+		save_config(QFileDialog::getSaveFileName(
+			this, "Save Configuration File", "", "Configuration Files (*.cfg)"));
 	});
 	connect(ui->actionQuit, &QAction::triggered, this, &MainWindow::close);
 	connect(ui->actionAbout, &QAction::triggered,
-	        [this]() { QMessageBox::about(this, "LSL TobiiPro App", tobiisdklicense); });
+		[this]() { QMessageBox::about(this, "LSL TobiiPro App", tobiisdklicense); });
 	QObject::connect(ui->findButton, &QPushButton::clicked, this, &MainWindow::refresh_eyetrackers);
 	connect(ui->linkButton, &QPushButton::clicked, this, &MainWindow::toggleRecording);
 
@@ -86,18 +85,18 @@ MainWindow::MainWindow(QWidget* parent, const char* config_file)
 	});
 }
 
-void MainWindow::load_config(const QString& filename) {
+void MainWindow::load_config(const QString &filename) {
 	QSettings settings(filename, QSettings::Format::IniFormat);
 	ui->address->setText(settings.value("TobiiPro/address", "127.0.0.1").toString());
 }
 
-void MainWindow::save_config(const QString& filename) {
+void MainWindow::save_config(const QString &filename) {
 	QSettings settings(filename, QSettings::Format::IniFormat);
 	settings.beginGroup("TobiiPro");
 	settings.setValue("address", ui->address->text());
 }
 
-void MainWindow::closeEvent(QCloseEvent* ev) {
+void MainWindow::closeEvent(QCloseEvent *ev) {
 	if (gaze_stream) {
 		QMessageBox::warning(this, "Recording still running", "Can't quit while recording");
 		ev->ignore();
@@ -105,17 +104,17 @@ void MainWindow::closeEvent(QCloseEvent* ev) {
 }
 
 void MainWindow::refresh_eyetrackers() {
-	TobiiResearchEyeTrackers* eyetrackers;
+	TobiiResearchEyeTrackers *eyetrackers;
 	if (auto res = tobii_research_find_all_eyetrackers(&eyetrackers)) {
-		QMessageBox::warning(this, "Error",
-		                     "Could not enumerate eye trackers: " + QString::number(res));
+		QMessageBox::warning(
+			this, "Error", "Could not enumerate eye trackers: " + QString::number(res));
 		return;
 	}
 
 	ui->trackerDropdown->clear();
 	for (std::size_t i = 0; i < eyetrackers->count; ++i) {
 		ui->trackerDropdown->addItem(
-		    tobii_str_wrap_QString(&tobii_research_get_address, eyetrackers->eyetrackers[i]));
+			tobii_str_wrap_QString(&tobii_research_get_address, eyetrackers->eyetrackers[i]));
 	}
 }
 
@@ -135,45 +134,45 @@ void MainWindow::toggleRecording() {
 			// Start LSL outlet
 			std::string streamname = "Tobii";
 			lsl::stream_info info(streamname, "Eyetracker", 6, samplingrate, lsl::cf_float32,
-			                      streamname + "at_" + address.toStdString());
+				streamname + "at_" + address.toStdString());
 
 			// append some meta-data
 			info.desc()
-			    .append_child("acquisition")
-			    .append_child_value("manufacturer", "TobiiPro")
-			    .append_child_value("model", "TODO")
-			    .append_child_value("application", "TobiiProApp")
-			    .append_child_value("precision", "24");
+				.append_child("acquisition")
+				.append_child_value("manufacturer", "TobiiPro")
+				.append_child_value("model", "TODO")
+				.append_child_value("application", "TobiiProApp")
+				.append_child_value("precision", "24");
 
 			auto channels = info.desc().append_child("channels");
 			channels.append_child("channel")
-			    .append_child_value("label", "left_x")
-			    .append_child_value("eye", "left")
-			    .append_child_value("type", "ScreenX")
-			    .append_child_value("unit", "screencoords");
+				.append_child_value("label", "left_x")
+				.append_child_value("eye", "left")
+				.append_child_value("type", "ScreenX")
+				.append_child_value("unit", "screencoords");
 			channels.append_child("channel")
-			    .append_child_value("label", "left_y")
-			    .append_child_value("eye", "left")
-			    .append_child_value("type", "ScreenY")
-			    .append_child_value("unit", "screencoords");
+				.append_child_value("label", "left_y")
+				.append_child_value("eye", "left")
+				.append_child_value("type", "ScreenY")
+				.append_child_value("unit", "screencoords");
 			channels.append_child("channel")
-			    .append_child_value("label", "left_pupil")
-			    .append_child_value("eye", "left")
-			    .append_child_value("type", "pupilsize");
+				.append_child_value("label", "left_pupil")
+				.append_child_value("eye", "left")
+				.append_child_value("type", "pupilsize");
 			channels.append_child("channel")
-			    .append_child_value("label", "right_x")
-			    .append_child_value("eye", "right")
-			    .append_child_value("type", "ScreenX")
-			    .append_child_value("unit", "screencoords");
+				.append_child_value("label", "right_x")
+				.append_child_value("eye", "right")
+				.append_child_value("type", "ScreenX")
+				.append_child_value("unit", "screencoords");
 			channels.append_child("channel")
-			    .append_child_value("label", "right_y")
-			    .append_child_value("eye", "right")
-			    .append_child_value("type", "ScreenY")
-			    .append_child_value("unit", "screencoords");
+				.append_child_value("label", "right_y")
+				.append_child_value("eye", "right")
+				.append_child_value("type", "ScreenY")
+				.append_child_value("unit", "screencoords");
 			channels.append_child("channel")
-			    .append_child_value("label", "right_pupil")
-			    .append_child_value("eye", "right")
-			    .append_child_value("type", "pupilsize");
+				.append_child_value("label", "right_pupil")
+				.append_child_value("eye", "right")
+				.append_child_value("type", "pupilsize");
 
 			// make a new outlet
 			gaze_stream.reset(new lsl::stream_outlet(info, 1200));
@@ -183,8 +182,8 @@ void MainWindow::toggleRecording() {
 			samples_written = 0;
 
 			// subscribe to the stream
-			res = tobii_research_subscribe_to_gaze_data(current_tracker, push_tobii_gaze,
-			                                            gaze_stream.get());
+			res = tobii_research_subscribe_to_gaze_data(
+				current_tracker, push_tobii_gaze, gaze_stream.get());
 			qInfo() << "Subscribed: " << res;
 
 			const int sync_samples = 10;
@@ -193,17 +192,16 @@ void MainWindow::toggleRecording() {
 				tobii_research_get_system_time_stamp(&tobii_clock);
 				double lsl_clock = lsl::local_clock();
 				qInfo() << "Difference LSL clock - Tobii Clock"
-				        << (static_cast<int64_t>(lsl_clock * 1000000) - tobii_clock);
+						<< (static_cast<int64_t>(lsl_clock * 1000000) - tobii_clock);
 			}
 			statusTimer.start();
-		} catch (std::exception& e) {
-			QMessageBox::critical(this, "Error", QStringLiteral("Error: ") + e.what(),
-			                      QMessageBox::Ok);
+		} catch (std::exception &e) {
+			QMessageBox::critical(
+				this, "Error", QStringLiteral("Error: ") + e.what(), QMessageBox::Ok);
 		}
 		ui->linkButton->setEnabled(true);
 		ui->linkButton->setText("Unlink");
-	}
-	else {
+	} else {
 		// === perform unlink action ===
 		ui->linkButton->setEnabled(false);
 		tobii_research_unsubscribe_from_gaze_data(current_tracker, push_tobii_gaze);
