@@ -19,7 +19,7 @@ if(NOT TARGET LSL::lsl)
 endif()
 
 # create an imported target we later add the required information to
-add_library(tobii UNKNOWN IMPORTED)
+add_library(tobii SHARED IMPORTED)
 
 # find the tobii_research.h header in the subfolder tobii/include
 find_path(TOBII_SDK_INCLUDE_PATH
@@ -29,12 +29,21 @@ find_path(TOBII_SDK_INCLUDE_PATH
 # find a shared library called tobii_research.dll or libtobii_research.so
 # in tobii/lib
 find_library(TOBII_SDK_LIB tobii_research
-	PATHS "tobii/lib"
+	PATHS "${CMAKE_CURRENT_LIST_DIR}/tobii/lib"
 )
+if(NOT TOBII_SDK_LIB)
+	message(FATAL_ERROR "Tobii SDK library not found")
+endif()
+# Windows needs additional help
+get_filename_component(libext ${TOBII_SDK_LIB} EXT)
+if(libext STREQUAL ".lib")
+	set_target_properties(tobii PROPERTIES IMPORTED_IMPLIB ${TOBII_SDK_LIB})
+	string(REPLACE ".lib" ".dll" TOBII_SDK_LIB ${TOBII_SDK_LIB})
+endif()
 # add the paths we just found to the tobii library target
 set_target_properties(tobii PROPERTIES
-	INTERFACE_INCLUDE_DIRECTORIES ${TOBII_SDK_INCLUDE_PATH}
-	IMPORTED_LOCATION ${TOBII_SDK_LIB}
+	INTERFACE_INCLUDE_DIRECTORIES "${TOBII_SDK_INCLUDE_PATH}"
+	IMPORTED_LOCATION "${TOBII_SDK_LIB}"
 )
 
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
