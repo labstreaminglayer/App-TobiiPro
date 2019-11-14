@@ -2,20 +2,7 @@ cmake_minimum_required(VERSION 3.8)
 project(TobiiPro
 	LANGUAGES CXX
 	VERSION 0.1.0)
-
-# set up LSL if not done already
-if(NOT TARGET LSL::lsl)
-	# when building out of tree LSL_ROOT needs to be specified on the cmd line
-	file(TO_CMAKE_PATH "${LSL_INSTALL_ROOT}" LSL_INSTALL_ROOT)
-	list(APPEND LSL_INSTALL_ROOT "${CMAKE_CURRENT_LIST_DIR}/../../LSL/liblsl/build/install")
-	find_package(LSL HINTS ${LSL_INSTALL_ROOT}/share/LSL/ ${LSL_INSTALL_ROOT}/LSL/share/LSL QUIET)
-	if(NOT LSL_FOUND)
-		message(FATAL_ERROR "Precompiled LSL was not found. See https://github.com/labstreaminglayer/labstreaminglayer/blob/master/doc/BUILD.md#lsl_install_root for more information.")
-	endif()
-	list(APPEND CMAKE_MODULE_PATH ${LSL_DIR})
-	message(STATUS "Looking for LSLCMake in ${LSL_DIR}")
-	include(LSLCMake)
-endif()
+include(Findliblsl.cmake)
 
 # create an imported target we later add the required information to
 add_library(tobii SHARED IMPORTED)
@@ -45,6 +32,10 @@ set_target_properties(tobii PROPERTIES
 	IMPORTED_LOCATION "${TOBII_SDK_LIB}"
 )
 
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTORCC ON)
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 find_package(Threads REQUIRED)
@@ -75,7 +66,7 @@ target_compile_features(tobiisynctest PUBLIC cxx_std_14)
 
 installLSLApp(${PROJECT_NAME})
 installLSLAuxFiles(${PROJECT_NAME}
-	tobiipro.cfg
+	${PROJECT_NAME}.cfg
 	tobiilogo.svg
 	${TOBII_SDK_LIB}
 )
