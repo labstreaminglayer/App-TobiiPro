@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.8)
 project(TobiiPro
 	LANGUAGES CXX
 	VERSION 0.1.0)
@@ -70,7 +70,8 @@ target_link_libraries(${PROJECT_NAME}
 	LSL::lsl
 	tobii
 )
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 14)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_14)
+target_compile_features(tobiisynctest PUBLIC cxx_std_14)
 
 installLSLApp(${PROJECT_NAME})
 installLSLAuxFiles(${PROJECT_NAME}
