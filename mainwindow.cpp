@@ -5,6 +5,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QSettings>
+#include <QStandardPaths>
 #include <TobiiLib.h>
 #include <chrono>
 #include <cmath>
@@ -77,7 +78,8 @@ MainWindow::MainWindow(QWidget *parent, const char *config_file)
 	QObject::connect(ui->findButton, &QPushButton::clicked, this, &MainWindow::refresh_eyetrackers);
 	connect(ui->linkButton, &QPushButton::clicked, this, &MainWindow::toggleRecording);
 
-	load_config(config_file);
+	QString cfgfilepath = find_config_file(config_file);
+	load_config(cfgfilepath);
 
 	statusTimer.setInterval(1000);
 	connect(&statusTimer, &QTimer::timeout, [this]() {
@@ -211,5 +213,39 @@ void MainWindow::toggleRecording() {
 		ui->linkButton->setText("Link");
 	}
 }
+/**
+ * Find a config file to load. This is (in descending order or preference):
+ * - a file supplied on the command line
+ * - [executablename].cfg in one the the following folders:
+ *	- the current working directory
+ *	- the default config folder, e.g. '~/Library/Preferences' on OS X
+ *	- the executable folder
+ * @param filename	Optional file name supplied e.g. as command line parameter
+ * @return Path to a found config file
+ */
+QString MainWindow::find_config_file(const char *filename) {
+	if (filename) {
+		QString qfilename(filename);
+		if (!QFileInfo::exists(qfilename))
+			QMessageBox(QMessageBox::Warning, "Config file not found",
+				QStringLiteral("The file '%1' doesn't exist").arg(qfilename), QMessageBox::Ok,
+				this);
+		else
+			return qfilename;
+	}
+	QFileInfo exeInfo(QCoreApplication::applicationFilePath());
+	QString defaultCfgFilename(exeInfo.completeBaseName() + ".cfg");
+	QStringList cfgpaths;
+	cfgpaths << QDir::currentPath()
+			 << QStandardPaths::standardLocations(QStandardPaths::ConfigLocation) << exeInfo.path();
+	for (auto path : cfgpaths) {
+		QString cfgfilepath = path + QDir::separator() + defaultCfgFilename;
+		if (QFileInfo::exists(cfgfilepath)) return cfgfilepath;
+	}
+	QMessageBox(QMessageBox::Warning, "No config file not found",
+		QStringLiteral("No default config file could be found"), QMessageBox::Ok, this);
+	return "";
+}
+
 
 MainWindow::~MainWindow() noexcept = default;
