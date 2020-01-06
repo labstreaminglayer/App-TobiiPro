@@ -1,5 +1,5 @@
 LSL TobiiPro Connector (not including the Tobii logo)
-Copyright (C) 2019 Tristan Stenner
+Copyright (C) 2020 Tristan Stenner
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -22,5 +22,5 @@ https://qt.io/qt-licensing-terms/.
 liblsl, MIT
 https://github.com/labstreaminglayer/liblsl/blob/master/LICENSE
 
-LSL Best Practices GUI Example, MIT
-https://github.com/labstreaminglayer/App-BestPracticesGUI/blob/master/LICENSE.txt
+LSL App Template CPP Qt, MIT
+https://github.com/labstreaminglayer/AppTemplate_cpp_qt/blob/master/LICENSE.txt

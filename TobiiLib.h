@@ -1,5 +1,4 @@
-#ifndef TOBIILIB_H_
-#define TOBIILIB_H_
+#pragma once
 
 #include <string>
 #include <tobii_research_eyetracker.h>
@@ -14,5 +13,3 @@ std::string tobii_str_wrap(TobiiResearchStatus (*funcptr)(Args, char**), Args ar
 	tobii_research_free_string(tmp);
 	return res;
 }
-
-#endif

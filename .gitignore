@@ -4,3 +4,6 @@ ui_*.h
 /tobii/
 /CMakeLists.txt.user
 /CMakeLists.json
+/.vs/
+/CMakeSettings.json
+/out/

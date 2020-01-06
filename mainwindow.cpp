@@ -213,6 +213,7 @@ void MainWindow::toggleRecording() {
 		ui->linkButton->setText("Link");
 	}
 }
+
 /**
  * Find a config file to load. This is (in descending order or preference):
  * - a file supplied on the command line
