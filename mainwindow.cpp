@@ -102,8 +102,10 @@ void MainWindow::save_config(const QString &filename) {
 	settings.beginGroup("TobiiPro");
 	settings.setValue("address", ui->address->text());
 	settings.setValue("rate", ui->samplingrate->text());
+	settings.endGroup();
 	settings.beginGroup("Participant");
 	settings.setValue("ID", ui->participant->text());
+	settings.endGroup();
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
