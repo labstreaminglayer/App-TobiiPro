@@ -43,6 +43,7 @@ static uint32_t samples_written = 0;
 
 void push_tobii_gaze(TobiiResearchGazeData *g, void *gaze_stream) {
 	auto gs = reinterpret_cast<lsl::stream_outlet *>(gaze_stream);
+	/*
 	if (!g->left_eye.gaze_point.validity) {
 		g->left_eye.gaze_point.position_on_display_area.x = NAN;
 		g->left_eye.gaze_point.position_on_display_area.y = NAN;
@@ -51,13 +52,14 @@ void push_tobii_gaze(TobiiResearchGazeData *g, void *gaze_stream) {
 		g->right_eye.gaze_point.position_on_display_area.x = NAN;
 		g->right_eye.gaze_point.position_on_display_area.y = NAN;
 	}
+	*/
 	const float sample[] = {g->device_time_stamp,
 		g->system_time_stamp,
-		g->left_eye.gaze_point.position_on_display_area.x,
-		g->left_eye.gaze_point.position_on_display_area.y,
+		g->left_eye.gaze_point.validity ? g->left_eye.gaze_point.position_on_display_area.x : NAN,
+		g->left_eye.gaze_point.validity ? g->left_eye.gaze_point.position_on_display_area.y : NAN,
 		g->left_eye.pupil_data.validity ? g->left_eye.pupil_data.diameter : NAN,
-		g->right_eye.gaze_point.position_on_display_area.x,
-		g->right_eye.gaze_point.position_on_display_area.y,
+		g->right_eye.gaze_point.validity ? g->right_eye.gaze_point.position_on_display_area.x : NAN,
+		g->right_eye.gaze_point.validity ? g->right_eye.gaze_point.position_on_display_area.y : NAN,
 		g->right_eye.pupil_data.validity ? g->right_eye.pupil_data.diameter : NAN};
 	gs->push_sample(sample);
 	samples_written++;
