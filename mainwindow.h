@@ -25,6 +25,7 @@ private slots:
 	void closeEvent(QCloseEvent *ev) override;
 	void toggleRecording();
 	void refresh_eyetrackers();
+	void refresh_samplingrate();
 
 private:
 	// function for loading / saving the config file

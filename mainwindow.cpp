@@ -43,6 +43,7 @@ static uint32_t samples_written = 0;
 
 void push_tobii_gaze(TobiiResearchGazeData *g, void *gaze_stream) {
 	auto gs = reinterpret_cast<lsl::stream_outlet *>(gaze_stream);
+	/*
 	if (!g->left_eye.gaze_point.validity) {
 		g->left_eye.gaze_point.position_on_display_area.x = NAN;
 		g->left_eye.gaze_point.position_on_display_area.y = NAN;
@@ -51,19 +52,23 @@ void push_tobii_gaze(TobiiResearchGazeData *g, void *gaze_stream) {
 		g->right_eye.gaze_point.position_on_display_area.x = NAN;
 		g->right_eye.gaze_point.position_on_display_area.y = NAN;
 	}
-	const float sample[] = {g->left_eye.gaze_point.position_on_display_area.x,
-		g->left_eye.gaze_point.position_on_display_area.y,
+	*/
+	const float sample[] = {g->device_time_stamp,
+		g->system_time_stamp,
+		g->left_eye.gaze_point.validity ? g->left_eye.gaze_point.position_on_display_area.x : NAN,
+		g->left_eye.gaze_point.validity ? g->left_eye.gaze_point.position_on_display_area.y : NAN,
 		g->left_eye.pupil_data.validity ? g->left_eye.pupil_data.diameter : NAN,
-		g->right_eye.gaze_point.position_on_display_area.x,
-		g->right_eye.gaze_point.position_on_display_area.y,
+		g->right_eye.gaze_point.validity ? g->right_eye.gaze_point.position_on_display_area.x : NAN,
+		g->right_eye.gaze_point.validity ? g->right_eye.gaze_point.position_on_display_area.y : NAN,
 		g->right_eye.pupil_data.validity ? g->right_eye.pupil_data.diameter : NAN};
-	gs->push_sample(sample, g->system_time_stamp / 1000000.);
+	gs->push_sample(sample);
 	samples_written++;
 };
 
 MainWindow::MainWindow(QWidget *parent, const char *config_file)
 	: QMainWindow(parent), ui(new Ui::MainWindow) {
 	ui->setupUi(this);
+	connect(ui->address, &QLineEdit::textChanged, this, &MainWindow::refresh_samplingrate);
 	connect(ui->actionLoad_Configuration, &QAction::triggered, [this]() {
 		load_config(QFileDialog::getOpenFileName(
 			this, "Load Configuration File", "", "Configuration Files (*.cfg)"));
@@ -90,12 +95,19 @@ MainWindow::MainWindow(QWidget *parent, const char *config_file)
 void MainWindow::load_config(const QString &filename) {
 	QSettings settings(filename, QSettings::Format::IniFormat);
 	ui->address->setText(settings.value("TobiiPro/address", "127.0.0.1").toString());
+	ui->samplingrate->setText(settings.value("TobiiPro/rate", "60").toString());
+	ui->participant->setText(settings.value("Participant/ID", "P0").toString());
 }
 
 void MainWindow::save_config(const QString &filename) {
 	QSettings settings(filename, QSettings::Format::IniFormat);
 	settings.beginGroup("TobiiPro");
 	settings.setValue("address", ui->address->text());
+	settings.setValue("rate", ui->samplingrate->text());
+	settings.endGroup();
+	settings.beginGroup("Participant");
+	settings.setValue("ID", ui->participant->text());
+	settings.endGroup();
 }
 
 void MainWindow::closeEvent(QCloseEvent *ev) {
@@ -120,11 +132,40 @@ void MainWindow::refresh_eyetrackers() {
 	}
 }
 
+void MainWindow::refresh_samplingrate() {
+	ui->samplingrateDropdown->clear();
+	QString address = ui->address->text();
+	try {
+		
+		QByteArray addr = address.toLocal8Bit();
+		auto res = tobii_research_get_eyetracker(addr.constData(), &current_tracker);
+		if (res != TOBII_RESEARCH_STATUS_OK)
+			return;
+		
+		TobiiResearchGazeOutputFrequencies* frequencies = NULL;
+		size_t i = 0;
+		int status = tobii_research_get_all_gaze_output_frequencies(current_tracker, &frequencies);
+		for (; i < frequencies->frequency_count; i++) {
+			ui->samplingrateDropdown->addItem(QString::number(frequencies->frequencies[i]));
+		}
+	}
+	catch (std::exception & e) {
+		QMessageBox::critical(
+			this, "Error", QStringLiteral("Error: ") + e.what(), QMessageBox::Ok);
+	}
+
+	
+}
+
 void MainWindow::toggleRecording() {
 	if (!gaze_stream) {
 		ui->linkButton->setEnabled(false);
 		// === perform link action ===
+		QString participant = ui->participant->text();
 		QString address = ui->address->text();
+		QString ratestr = ui->samplingrate->text();
+		bool ok = false;
+		double rate = ratestr.toDouble(&ok);
 
 		try {
 			QByteArray addr = address.toLocal8Bit();
@@ -132,10 +173,9 @@ void MainWindow::toggleRecording() {
 			if (res != TOBII_RESEARCH_STATUS_OK)
 				throw std::runtime_error("Could not connect: " + std::to_string(res));
 
-			const auto samplingrate = 600; // TODO
 			// Start LSL outlet
 			std::string streamname = "Tobii";
-			lsl::stream_info info(streamname, "Eyetracker", 6, samplingrate, lsl::cf_float32,
+			lsl::stream_info info(streamname+"-"+participant.toLocal8Bit().constData(), "Eyetracker", 8,rate, lsl::cf_float32,
 				streamname + "at_" + address.toStdString());
 
 			// append some meta-data
@@ -147,6 +187,14 @@ void MainWindow::toggleRecording() {
 				.append_child_value("precision", "24");
 
 			auto channels = info.desc().append_child("channels");
+			channels.append_child("channel")
+				.append_child_value("label", "device_ts")
+				.append_child_value("type", "timestamp")
+				.append_child_value("unit", "milliseconds");
+			channels.append_child("channel")
+				.append_child_value("label", "system_ts")
+				.append_child_value("type", "timestamp")
+				.append_child_value("unit", "milliseconds");
 			channels.append_child("channel")
 				.append_child_value("label", "left_x")
 				.append_child_value("eye", "left")
@@ -183,6 +231,7 @@ void MainWindow::toggleRecording() {
 			// reset the counter
 			samples_written = 0;
 
+			tobii_research_set_gaze_output_frequency(current_tracker, rate);
 			// subscribe to the stream
 			res = tobii_research_subscribe_to_gaze_data(
 				current_tracker, push_tobii_gaze, gaze_stream.get());
@@ -202,7 +251,7 @@ void MainWindow::toggleRecording() {
 				this, "Error", QStringLiteral("Error: ") + e.what(), QMessageBox::Ok);
 		}
 		ui->linkButton->setEnabled(true);
-		ui->linkButton->setText("Unlink");
+		ui->linkButton->setText("Stop stream");
 	} else {
 		// === perform unlink action ===
 		ui->linkButton->setEnabled(false);
@@ -210,7 +259,7 @@ void MainWindow::toggleRecording() {
 		gaze_stream.reset();
 		statusTimer.stop();
 		ui->linkButton->setEnabled(true);
-		ui->linkButton->setText("Link");
+		ui->linkButton->setText("Start stream");
 	}
 }
 

@@ -36,7 +36,7 @@
     <item row="2" column="0">
      <widget class="QLabel" name="addressLabel">
       <property name="text">
-       <string>Tobii Address</string>
+       <string>Selected Address</string>
       </property>
      </widget>
     </item>
@@ -48,14 +48,14 @@
      </widget>
     </item>
     <item row="3" column="0">
-     <widget class="QLabel" name="samplingrateLabel">
+     <widget class="QLabel" name="samplingrateDropdownLabel">
       <property name="text">
-       <string>Samplingrate</string>
+       <string>Rate options</string>
       </property>
      </widget>
     </item>
     <item row="3" column="1">
-     <widget class="QComboBox" name="samplingrate">
+     <widget class="QComboBox" name="samplingrateDropdown">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
         <horstretch>0</horstretch>
@@ -67,7 +67,35 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="0" colspan="2">
+    <item row="4" column="0">
+     <widget class="QLabel" name="samplingrateLabel">
+      <property name="text">
+       <string>Selected rate</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="samplingrate">
+      <property name="text">
+       <string> </string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="participantLabel">
+      <property name="text">
+       <string>Participant</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QLineEdit" name="participant">
+      <property name="text">
+       <string> </string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="0" colspan="2">
      <widget class="QPushButton" name="linkButton">
       <property name="sizePolicy">
        <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
@@ -76,11 +104,11 @@
        </sizepolicy>
       </property>
       <property name="text">
-       <string>Link</string>
+       <string>Start stream</string>
       </property>
      </widget>
     </item>
-    <item row="5" column="0" colspan="2">
+    <item row="7" column="0" colspan="2">
      <widget class="QGroupBox" name="groupBox">
       <property name="title">
        <string>Streams to enable</string>
@@ -96,7 +124,7 @@
       </layout>
      </widget>
     </item>
-    <item row="7" column="0">
+    <item row="9" column="0">
      <widget class="QLabel" name="tobiilogo">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
@@ -112,7 +140,7 @@
       </property>
      </widget>
     </item>
-    <item row="7" column="1">
+    <item row="9" column="1">
      <widget class="QLabel" name="poweredbytobii">
       <property name="text">
        <string>This application is
@@ -189,6 +217,22 @@ powered by Tobii</string>
    <sender>trackerDropdown</sender>
    <signal>activated(QString)</signal>
    <receiver>address</receiver>
+   <slot>setText(QString)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>150</x>
+     <y>57</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>150</x>
+     <y>107</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>samplingrateDropdown</sender>
+   <signal>activated(QString)</signal>
+   <receiver>samplingrate</receiver>
    <slot>setText(QString)</slot>
    <hints>
     <hint type="sourcelabel">
