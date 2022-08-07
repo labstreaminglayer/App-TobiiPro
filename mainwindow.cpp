@@ -135,7 +135,7 @@ void MainWindow::toggleRecording() {
 			const auto samplingrate = 600; // TODO
 			// Start LSL outlet
 			std::string streamname = "Tobii";
-			lsl::stream_info info(streamname, "Eyetracker", 6, samplingrate, lsl::cf_float32,
+			lsl::stream_info info(streamname, "Gaze", 6, samplingrate, lsl::cf_float32,
 				streamname + "at_" + address.toStdString());
 
 			// append some meta-data
